@@ -48,6 +48,11 @@ where
         Self::nonce_generate_from_random_bytes(secret, random_bytes)
     }
 
+    /// Negate `Nonce`.
+    pub fn negate(&mut self) {
+        self.0 = <<C::Group as Group>::Field>::negate(&self.0);
+    }
+
     /// Generates a nonce from the given random bytes.
     /// This function allows testing and MUST NOT be made public.
     pub(crate) fn nonce_generate_from_random_bytes(
@@ -260,6 +265,12 @@ where
     /// Gets the binding [`Nonce`]
     pub fn binding(&self) -> &Nonce<C> {
         &self.binding
+    }
+
+    /// Negate `SigningShare`.
+    pub fn negate_nonces(&mut self) {
+        self.binding.negate();
+        self.hiding.negate();
     }
 }
 

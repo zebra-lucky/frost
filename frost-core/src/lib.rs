@@ -72,6 +72,12 @@ pub trait Field: Copy + Clone {
     /// element is zero.
     fn invert(scalar: &Self::Scalar) -> Result<Self::Scalar, FieldError>;
 
+    /// Computes the negation of the element of the scalar field
+    #[allow(unused)]
+    fn negate(scalar: &Self::Scalar) -> Self::Scalar {
+        panic!("Not implemented");
+    }
+
     /// Generate a random scalar from the entire space [0, l-1]
     ///
     /// <https://www.ietf.org/archive/id/draft-irtf-cfrg-frost-14.html#section-3.1-3.3>
@@ -189,6 +195,12 @@ pub trait Group: Copy + Clone + PartialEq {
     ///
     /// [`ScalarBaseMult()`]: https://www.ietf.org/archive/id/draft-irtf-cfrg-frost-14.html#section-3.1-3.5
     fn generator() -> Self::Element;
+
+    /// Check if element is odd
+    #[allow(unused)]
+    fn y_is_odd(element: &Self::Element) -> bool {
+        panic!("Not implemented");
+    }
 
     /// A member function of a group _G_ that maps an [`Element`] to a unique byte array buf of
     /// fixed length Ne.
@@ -341,9 +353,109 @@ pub trait Ciphersuite: Copy + Clone + PartialEq + Debug {
         signature: &Signature<Self>,
         public_key: &VerifyingKey<Self>,
     ) -> Result<(), Error<Self>> {
-        let c = crate::challenge::<Self>(&signature.R, &public_key.element, msg);
+        let c = <Self>::challenge(&signature.R, &public_key.element, msg);
 
         public_key.verify_prehashed(c, signature)
+    }
+
+    /// Generates the challenge as is required for Schnorr signatures.
+    ///
+    /// Deals in bytes, so that [FROST] and singleton signing and verification can use it with different
+    /// types.
+    ///
+    /// This is the only invocation of the H2 hash function from the [RFC].
+    ///
+    /// [FROST]: https://www.ietf.org/archive/id/draft-irtf-cfrg-frost-11.html#name-signature-challenge-computa
+    /// [RFC]: https://www.ietf.org/archive/id/draft-irtf-cfrg-frost-11.html#section-3.2
+    fn challenge(R: &Element<Self>, verifying_key: &Element<Self>, msg: &[u8]) -> Challenge<Self>
+    {
+        challenge(R, verifying_key, msg)
+    }
+
+    /// determine tweak is need
+    fn is_need_tweaking() -> bool {
+        false
+    }
+
+    /// aggregate tweak z
+    #[allow(unused)]
+    fn aggregate_tweak_z(
+        z: <<Self::Group as Group>::Field as Field>::Scalar,
+        challenge: &Challenge<Self>,
+        verifying_key: &Element<Self>,
+    ) -> <<Self::Group as Group>::Field as Field>::Scalar
+    {
+        panic!("Not implemented");
+    }
+
+    /// signature_share tweak
+    #[allow(unused)]
+    fn compute_tweaked_signature_share(
+        signer_nonces: &frost::round1::SigningNonces<Self>,
+        binding_factor: frost::BindingFactor<Self>,
+        group_commitment: frost::GroupCommitment<Self>,
+        lambda_i: <<Self::Group as Group>::Field as Field>::Scalar,
+        key_package: &frost::keys::KeyPackage<Self>,
+        challenge: Challenge<Self>,
+    ) -> frost::round2::SignatureShare<Self>
+    {
+        panic!("Not implemented");
+    }
+
+    /// calculate tweaked public key
+    #[allow(unused)]
+    fn tweaked_public_key(
+        public_key: &<Self::Group as Group>::Element,
+    ) -> <Self::Group as Group>::Element {
+        panic!("Not implemented");
+    }
+
+    /// calculate tweaked R
+    #[allow(unused)]
+    fn tweaked_R(
+        public_key: &<Self::Group as Group>::Element,
+    ) -> <Self::Group as Group>::Element {
+        panic!("Not implemented");
+    }
+
+    /// tweaked secret
+    #[allow(unused)]
+    fn tweaked_secret_key(
+        secret: <<Self::Group as Group>::Field as Field>::Scalar,
+        public: &Element<Self>,
+    ) -> <<Self::Group as Group>::Field as Field>::Scalar
+    {
+        panic!("Not implemented");
+    }
+
+    /// tweaked nonce
+    #[allow(unused)]
+    fn tweaked_nonce(
+        nonce: <<Self::Group as Group>::Field as Field>::Scalar,
+        R: &Element<Self>,
+    ) -> <<Self::Group as Group>::Field as Field>::Scalar
+    {
+        panic!("Not implemented");
+    }
+
+    /// tweaked group commitment
+    #[allow(unused)]
+    fn tweaked_group_commitment_share(
+        group_commitment_share: &<Self::Group as Group>::Element,
+        group_commitment: &<Self::Group as Group>::Element,
+    ) -> <Self::Group as Group>::Element
+    {
+        panic!("Not implemented");
+    }
+
+    /// tweaked verifying share
+    #[allow(unused)]
+    fn tweaked_verifying_share(
+        verifying_share: &<Self::Group as Group>::Element,
+        verifying_key: &<Self::Group as Group>::Element,
+    ) -> <Self::Group as Group>::Element
+    {
+        panic!("Not implemented");
     }
 }
 
@@ -367,7 +479,6 @@ where
     C: Ciphersuite,
 {
     /// Creates a challenge from a scalar.
-    #[cfg(feature = "internals")]
     pub fn from_scalar(
         scalar: <<<C as Ciphersuite>::Group as Group>::Field as Field>::Scalar,
     ) -> Self {
@@ -375,7 +486,6 @@ where
     }
 
     /// Return the underlying scalar.
-    #[cfg(feature = "internals")]
     pub fn to_scalar(self) -> <<<C as Ciphersuite>::Group as Group>::Field as Field>::Scalar {
         self.0
     }

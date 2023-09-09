@@ -83,6 +83,11 @@ where
     pub fn serialize(&self) -> <<C::Group as Group>::Field as Field>::Serialization {
         <<C::Group as Group>::Field>::serialize(&self.0)
     }
+
+    /// Returns negated SigningShare
+    pub fn negate(&mut self) {
+        self.0 = <<C::Group as Group>::Field>::negate(&self.0);
+    }
 }
 
 impl<C> Debug for SigningShare<C>
@@ -610,6 +615,11 @@ where
             verifying_key,
             min_signers,
         }
+    }
+
+    /// Negate `SigningShare`.
+    pub fn negate_signing_share(&mut self) {
+        self.signing_share.negate();
     }
 }
 
