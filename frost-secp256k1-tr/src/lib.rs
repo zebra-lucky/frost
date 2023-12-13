@@ -337,19 +337,11 @@ impl Ciphersuite for Secp256K1Sha256 {
     ) -> <<Self::Group as Group>::Field as Field>::Scalar {
         let t = tweak(&verifying_key, &[]);
         let tc = t * challenge.clone().to_scalar();
-        let z = if verifying_key.to_affine().y_is_odd().into() {
+        let tweaked_pubkey = tweaked_public_key(&verifying_key, &[]);
+        if tweaked_pubkey.to_affine().y_is_odd().into() {
             z - tc
         } else {
             z + tc
-        };
-        let tweaked_is_odd = tweaked_public_key(verifying_key, &[])
-            .to_affine()
-            .y_is_odd()
-            .into();
-        if tweaked_is_odd {
-            -z
-        } else {
-            z
         }
     }
 
