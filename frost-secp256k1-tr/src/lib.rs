@@ -360,8 +360,13 @@ impl Ciphersuite for Secp256K1Sha256 {
         }
 
         let mut kp = key_package.clone();
-        let tweaked_pubkey = tweaked_public_key(key_package.verifying_key().element(), &[]);
-        if tweaked_pubkey.to_affine().y_is_odd().into() {
+        let public_key = key_package.verifying_key();
+        let pubkey_is_odd = public_key.y_is_odd();
+        let tweaked_pubkey_is_odd = tweaked_public_key(public_key.element(), &[])
+            .to_affine()
+            .y_is_odd()
+            .into();
+        if pubkey_is_odd != tweaked_pubkey_is_odd {
             kp.negate_signing_share();
         }
 
