@@ -225,7 +225,11 @@ pub fn tweaked_public_key(
     if public_key.to_affine().y_is_odd().into() {
         pk = -pk;
     }
-    ProjectivePoint::GENERATOR * tweak(&pk, merkle_root) + pk
+
+    let tweaked_pubkey = ProjectivePoint::GENERATOR * tweak(&pk, merkle_root) + pk;
+    AffinePoint::decompact(&tweaked_pubkey.to_affine().x())
+        .unwrap()
+        .into()
 }
 
 /// Create a BIP341 compliant tweaked secret key
