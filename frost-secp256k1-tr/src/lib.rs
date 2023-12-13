@@ -225,8 +225,15 @@ pub fn tweaked_public_key(
     if public_key.to_affine().y_is_odd().into() {
         pk = -pk;
     }
+    ProjectivePoint::GENERATOR * tweak(&pk, merkle_root) + pk
+}
 
-    let tweaked_pubkey = ProjectivePoint::GENERATOR * tweak(&pk, merkle_root) + pk;
+/// Creates a real BIP341 tweaked public key by assuming an even y-coordinate.
+pub fn real_tweaked_pubkey(
+    public_key: &<<Secp256K1Sha256 as Ciphersuite>::Group as Group>::Element,
+    merkle_root: &[u8],
+) -> <<Secp256K1Sha256 as Ciphersuite>::Group as Group>::Element {
+    let tweaked_pubkey = tweaked_public_key(public_key, merkle_root);
     AffinePoint::decompact(&tweaked_pubkey.to_affine().x())
         .unwrap()
         .into()
@@ -329,7 +336,21 @@ impl Ciphersuite for Secp256K1Sha256 {
         verifying_key: &Element<S>,
     ) -> <<Self::Group as Group>::Field as Field>::Scalar {
         let t = tweak(&verifying_key, &[]);
-        z + t * challenge.clone().to_scalar()
+        let tc = t * challenge.clone().to_scalar();
+        let z = if verifying_key.to_affine().y_is_odd().into() {
+            z - tc
+        } else {
+            z + tc
+        };
+        let tweaked_is_odd = tweaked_public_key(verifying_key, &[])
+            .to_affine()
+            .y_is_odd()
+            .into();
+        if tweaked_is_odd {
+            -z
+        } else {
+            z
+        }
     }
 
     /// compute tweaked signature_share
@@ -358,7 +379,7 @@ impl Ciphersuite for Secp256K1Sha256 {
     fn tweaked_public_key(
         public_key: &<Self::Group as Group>::Element,
     ) -> <Self::Group as Group>::Element {
-        tweaked_public_key(public_key, &[])
+        real_tweaked_pubkey(public_key, &[])
     }
 
     /// calculate tweaked R
