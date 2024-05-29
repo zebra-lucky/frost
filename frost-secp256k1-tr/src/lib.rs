@@ -29,7 +29,7 @@ mod tests;
 
 // Re-exports in our public API
 pub use frost_core::{
-    serde, Challenge, Ciphersuite, Element, Field, FieldError, Group, GroupCommitment, GroupError,
+    self, serde, Challenge, Ciphersuite, Element, Field, FieldError, Group, GroupCommitment, GroupError,
 };
 
 pub use rand_core;
